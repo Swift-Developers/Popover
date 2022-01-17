@@ -1,7 +1,15 @@
 import UIKit
 
 public struct PopoverConfig {
-    public static var defaultBackgroundColor: UIColor = .tertiarySystemBackground
+    
+    public static var defaultBackgroundColor: UIColor = {
+        if #available(iOS 13.0, *) {
+            return .tertiarySystemBackground
+        } else {
+            return .white
+        }
+    }()
+    
     public static var defaultBackgroundOverlayColor: UIColor = .black.withAlphaComponent(0.15)
     public static var defaultCornerRadius: CGFloat = 16.0
     public static var defaultShadowColor: UIColor = .black

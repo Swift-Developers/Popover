@@ -1,6 +1,5 @@
 import UIKit
-import BaseToolbox
-import KeyboardManager
+//import BaseToolbox
 
 struct PopoverData {
     let view: PopoverView
@@ -58,7 +57,7 @@ public class PopoverManager {
         backgroundColor: UIColor = PopoverConfig.defaultBackgroundColor,
         cornerRadius: CGFloat = PopoverConfig.defaultCornerRadius,
         container: UIView = PopoverConfig.defaultContainer!,
-        position: CGPoint = PopoverConfig.defaultContainer!.bounds.center,
+        position: CGPoint = CGPoint(x: PopoverConfig.defaultContainer!.bounds.minX, y: PopoverConfig.defaultContainer!.bounds.minY),
         showOnTop: Bool = true,
         showBackgroundOverlay: Bool = true,
         dismissByBackgroundTap: Bool = true,
@@ -126,9 +125,8 @@ public class PopoverManager {
 
         var backgroundOverlay: UIView? = nil
         if config.showBackgroundOverlay {
-            backgroundOverlay = UIView().then {
-                $0.backgroundColor = config.backgroundOverlayColor
-            }
+            backgroundOverlay = UIView()
+            backgroundOverlay?.backgroundColor = config.backgroundOverlayColor
         }
 
         let gesture = TouchObserveGesture(target: self, action: #selector(didTouch))

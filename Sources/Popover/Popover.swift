@@ -1,6 +1,6 @@
 import Foundation
 import UIKit
-import BaseToolbox
+//import BaseToolbox
 
 internal class ShapeView: UIView {
     override class var layerClass: AnyClass {
@@ -44,11 +44,12 @@ public class PopoverView: UIView {
 
     let triangle = ShapeView()
 
-    let contentWrapperView = UIView().then {
+    let contentWrapperView: UIView = {
         $0.cornerRadius = 12
         $0.backgroundColor = .white
         $0.clipsToBounds = true
-    }
+        return $0
+    }(UIView())
 
     public internal(set) var contentView: UIView? {
         didSet {
