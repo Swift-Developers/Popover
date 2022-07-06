@@ -1,19 +1,19 @@
 import UIKit
 //import BaseToolbox
 
-struct PopoverData {
-    let view: PopoverView
-    let backgroundView: UIView?
-    let gesture: TouchObserveGesture?
-    var config: PopoverConfig
+public struct PopoverData {
+    public let view: PopoverView
+    public let backgroundView: UIView?
+    public let gesture: PopoverDismissGesture?
+    public var config: PopoverConfig
 }
 
-public class PopoverManager {
+public class PopoverManager: NSObject {
     public static let shared = PopoverManager()
 
-    private var popovers: [PopoverData] = []
+    public private(set) var popovers: [PopoverData] = []
     public var currentPopover: PopoverView? {
-        return popovers.last?.view
+        popovers.last?.view
     }
     public var currentPopoverConfig: PopoverConfig? {
         get {
@@ -26,14 +26,9 @@ public class PopoverManager {
         }
     }
     public var currentBackgroundOverlay: UIView? {
-        return popovers.last?.backgroundView
+        popovers.last?.backgroundView
     }
     var hideTimer: Timer?
-
-    // block to be call when background tap is detected. return true if you want to dismiss the popover
-    public var onBackgroundTap: ((UIGestureRecognizer) -> Bool)?
-
-    public var onDismiss: (() -> Void)?
 
     public func show(
         popover: UIView,
@@ -90,18 +85,16 @@ public class PopoverManager {
         show(popover: popover, config: config)
     }
 
-    @objc func didTouch(gr: TouchObserveGesture) {
-        if gr.state == .began {
-            if let currentPopover = PopoverManager.shared.currentPopover,
-               currentPopover.hitTest(gr.location(in: currentPopover), with: nil) == nil,
-               PopoverManager.shared.popovers.last?.config.dismissByBackgroundTap ?? true,
-               PopoverManager.shared.onBackgroundTap?(gr) ?? true
-            {
-                let id = PopoverManager.shared.currentPopover?.identifier
-                delay(0.1) {
-                    if PopoverManager.shared.currentPopover?.identifier == id {
-                        PopoverManager.shared.dismiss()
-                    }
+    @objc func didTouch(gr: PopoverDismissGesture) {
+        if let popoverData = popovers.last,
+           popoverData.view.hitTest(gr.location(in: popoverData.view), with: nil) == nil,
+           popoverData.config.dismissByBackgroundTap,
+           popoverData.config.onBackgroundTap?(gr) ?? true
+        {
+            let id = popoverData.view.identifier
+            delay(0.1) {
+                if PopoverManager.shared.currentPopover?.identifier == id {
+                    PopoverManager.shared.dismiss()
                 }
             }
         }
@@ -139,7 +132,8 @@ public class PopoverManager {
             backgroundOverlay?.backgroundColor = config.backgroundOverlayColor
         }
 
-        let gesture = TouchObserveGesture(target: self, action: #selector(didTouch))
+        let gesture = PopoverDismissGesture(target: self, action: #selector(didTouch))
+        gesture.blockTap = config.shouldBlockBackgroundTapGesture
         if config.dismissByBackgroundTap {
             container.addGestureRecognizer(gesture)
         }
@@ -157,7 +151,7 @@ public class PopoverManager {
         popovers.append(PopoverData(view: popoverWrapper, backgroundView: backgroundOverlay, gesture: gesture, config: config))
         popoverWrapper.alpha = 0
         UIView.animate(
-            withDuration: 0.48, delay: 0,
+            withDuration: 0.48, delay: config.delay,
             usingSpringWithDamping: 0.8, initialSpringVelocity: 0,
             options: [.beginFromCurrentState, .allowUserInteraction],
             animations: {
@@ -219,7 +213,8 @@ public class PopoverManager {
         size.width = min(containerRect.width, size.width)
 
         popover.bounds = CGRect(x: 0, y: 0, width: size.width, height: size.height)
-
+        popover.layoutSubviews()
+        
         let popoverOrigin = origin(
             positioning: config.positioning, sourceRect: sourceRect, size: size, containerRect: containerRect)
         let transformOrigin = origin(
@@ -251,10 +246,7 @@ public class PopoverManager {
     }
 
     public func hide(completion: (() -> Void)?) {
-        let onDismiss = self.onDismiss
         hideTimer?.invalidate()
-        onBackgroundTap = nil
-        self.onDismiss = nil
         if let popoverData = popovers.popLast() {
             let entryTransform = self.layout(popover: popoverData.view, config: popoverData.config)
             if let gesture = popoverData.gesture {
@@ -272,9 +264,9 @@ public class PopoverManager {
                 popoverData.backgroundView?.removeFromSuperview()
                 popoverData.view.removeFromSuperview()
             }
+            popoverData.config.onDismiss?()
         } else {
             completion?()
         }
-        onDismiss?()
     }
 }

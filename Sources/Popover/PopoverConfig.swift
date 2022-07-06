@@ -33,6 +33,7 @@ public struct PopoverConfig {
     }
     public var container: UIView
     public var duration: TimeInterval = .infinity
+    public var delay: TimeInterval = 0
     public var identifier: String? = nil
     public var insets: UIEdgeInsets = .zero
     public var containerInsets: UIEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
@@ -48,9 +49,15 @@ public struct PopoverConfig {
     public var dismissPreviousPopover: Bool = true
     public var showBackgroundOverlay: Bool = true
     public var dismissByBackgroundTap: Bool = true
+    public var shouldBlockBackgroundTapGesture: Bool = true
     public var showTriangle: Bool = true
 
     public var anchor: PopoverAnchor = .frame(rect: CGRect(center: PopoverConfig.defaultContainer?.bounds.center ?? .zero, size: .zero))
+    
+    // block to be call when background tap is detected. return true if you want to dismiss the popover
+    public var onBackgroundTap: ((UIGestureRecognizer) -> Bool)?
+
+    public var onDismiss: (() -> Void)?
 
     public var sourceRect: CGRect {
         get {
