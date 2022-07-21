@@ -83,3 +83,23 @@ extension UIView {
         }
     }
 }
+
+extension UIView {
+    
+    func closestViewMatchingType<ViewType: UIView>(_: ViewType.Type) -> ViewType? {
+        closestViewPassingTest {
+            $0 is ViewType
+        } as? ViewType
+    }
+    
+    func closestViewPassingTest(_ test: (UIView) -> Bool) -> UIView? {
+        var current: UIView? = self.superview
+        while current != nil {
+            if test(current!) {
+                return current
+            }
+            current = current?.superview
+        }
+        return nil
+    }
+}
